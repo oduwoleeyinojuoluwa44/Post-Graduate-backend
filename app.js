@@ -21,9 +21,14 @@ app.get("/", (req, res) => {
   res.send("API is running...");
 });
 
-db.sequelize.sync({ alter: false })
-  .then(() => console.log("✅ DB connected. Models synced."))
-  .catch((err) => console.error("❌ DB connection error:", err));
+if (process.env.NODE_ENV !== "test") {
+  db.sequelize
+    .sync({ alter: false })
+    .then(() => console.log("✅ DB connected. Models synced."))
+    .catch((err) => console.error("❌ DB connection error:", err));
 
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+  const PORT = process.env.PORT || 5000;
+  app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+}
+
+module.exports = app;

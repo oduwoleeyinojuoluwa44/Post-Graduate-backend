@@ -10,12 +10,16 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-const sendMail = async (to, subject, html) => {
+module.exports = async ({ to, subject, text, html }) => {
+  // Skip sending emails during tests or when credentials are missing
+  if (process.env.NODE_ENV === "test" || !process.env.EMAIL_USER) return;
+
   try {
     await transporter.sendMail({
       from: `"Crescent PG Portal" <${process.env.EMAIL_USER}>`,
       to,
       subject,
+      text,
       html,
     });
     console.log(`📧 Email sent to ${to}`);
@@ -23,5 +27,3 @@ const sendMail = async (to, subject, html) => {
     console.error("❌ Email sending failed:", error);
   }
 };
-
-module.exports = sendMail;
