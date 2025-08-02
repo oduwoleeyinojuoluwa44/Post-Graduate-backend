@@ -14,6 +14,9 @@ app.use("/api/payment", require("./routes/paymentRoutes"));
 // Mount admin routes
 app.use("/api/admin", require("./routes/adminRoutes"));
 
+// Mount programme lookup routes
+app.use("/api/programme", require("./routes/programmeRoutes"));
+
 app.get("/", (req, res) => {
   res.send("API is running...");
 });

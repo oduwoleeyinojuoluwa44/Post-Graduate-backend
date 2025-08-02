@@ -1,4 +1,4 @@
-const { Admin, Staff } = require("../models");
+const { Admin, Staff, Student } = require("../models");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
@@ -115,6 +115,19 @@ exports.getStaffInfo = async (req, res) => {
 
     if (!staff) return res.status(404).json({ msg: "Staff not found." });
     res.json(staff);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ msg: "Server error", err });
+  }
+};
+
+// View all registered students
+exports.getAllStudents = async (req, res) => {
+  try {
+    const students = await Student.findAll({
+      attributes: { exclude: ["password"] },
+    });
+    res.json(students);
   } catch (err) {
     console.error(err);
     res.status(500).json({ msg: "Server error", err });
