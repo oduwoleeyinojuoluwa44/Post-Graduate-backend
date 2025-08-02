@@ -1,4 +1,4 @@
-const { Student } = require("../models");
+const { Student, Payment } = require("../models");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const sendEmail = require("../utils/mailer");
@@ -28,7 +28,15 @@ exports.registerStudent = async (req, res) => {
     if (existingAppID)
       return res.status(400).json({ msg: "Application ID already exists." });
 
-    const student = await Student.create({ name, email, password, application_id });
+    // Hash password before saving
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const student = await Student.create({
+      name,
+      email,
+      password: hashedPassword,
+      application_id,
+    });
 
     await sendEmail({
       to: student.email,
@@ -95,6 +103,60 @@ exports.loginStudent = async (req, res) => {
         matric_number: student.matric_number
       }
     });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ msg: "Server error", err });
+  }
+};
+
+// UPLOAD PAYMENT RECEIPT
+exports.uploadReceipt = async (req, res) => {
+  try {
+    const { payment_type, receipt_filename } = req.body;
+
+    if (
+      !payment_type ||
+      !["school_fee", "application_form", "acceptance_form"].includes(payment_type)
+    ) {
+      return res.status(400).json({ msg: "Invalid or missing payment type." });
+    }
+
+    if (!receipt_filename) {
+      return res.status(400).json({ msg: "Receipt filename is required." });
+    }
+
+    const student = await Student.findByPk(req.user.id);
+    if (!student) return res.status(404).json({ msg: "Student not found." });
+
+    const payment = await Payment.create({
+      application_id: student.application_id,
+      payment_type,
+      receipt_filename,
+      status: "pending",
+    });
+
+    res.status(201).json({
+      msg: "Receipt uploaded successfully. Awaiting review.",
+      paymentId: payment.id,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ msg: "Server error", err });
+  }
+};
+
+// VIEW APPLICATION/PAYMENT STATUS
+exports.getStatus = async (req, res) => {
+  try {
+    const student = await Student.findByPk(req.user.id);
+    if (!student) return res.status(404).json({ msg: "Student not found." });
+
+    const payments = await Payment.findAll({
+      where: { application_id: student.application_id },
+      attributes: ["id", "payment_type", "status", "receipt_filename", "reviewed_by", "reviewed_at"],
+    });
+
+    res.json({ payments });
   } catch (err) {
     console.error(err);
     res.status(500).json({ msg: "Server error", err });
