@@ -12,6 +12,9 @@ router.post("/login", adminController.loginAdmin);
 // View all registered admins (protected)
 router.get("/admins", verifyToken, adminController.getAllAdmins);
 
+// View all registered students (protected)
+router.get("/students", verifyToken, adminController.getAllStudents);
+
 // View a specific staff record from staff_tab (protected)
 router.get("/staff/:id", verifyToken, adminController.getStaffInfo);
 
