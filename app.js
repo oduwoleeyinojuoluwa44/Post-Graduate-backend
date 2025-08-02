@@ -8,6 +8,9 @@ app.use(express.json());
 // Mount student routes
 app.use("/api/student", require("./routes/studentRoutes"));
 
+// Mount payment routes
+app.use("/api/payment", require("./routes/paymentRoutes"));
+
 // Mount admin routes
 app.use("/api/admin", require("./routes/adminRoutes"));
 
