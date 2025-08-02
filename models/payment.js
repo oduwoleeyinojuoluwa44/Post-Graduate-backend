@@ -17,15 +17,19 @@ module.exports = (sequelize, DataTypes) => {
   
     // Associations go here
     Payment.associate = (models) => {
-      Payment.belongsTo(models.ApplicationCreateProfile, {
-        foreignKey: "application_id",
-        targetKey: "application_id",
-      });
-  
-      Payment.belongsTo(models.StaffTab, {
-        foreignKey: "reviewed_by",
-        targetKey: "staff_id",
-      });
+      if (models.ApplicationCreateProfile) {
+        Payment.belongsTo(models.ApplicationCreateProfile, {
+          foreignKey: "application_id",
+          targetKey: "application_id",
+        });
+      }
+
+      if (models.StaffTab) {
+        Payment.belongsTo(models.StaffTab, {
+          foreignKey: "reviewed_by",
+          targetKey: "staff_id",
+        });
+      }
     };
   
     return Payment;
