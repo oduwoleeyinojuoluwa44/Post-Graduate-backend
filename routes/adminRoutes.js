@@ -1,21 +1,23 @@
 const express = require("express");
 const router = express.Router();
 const adminController = require("../controllers/adminController");
-const verifyToken = require("../middleware/verifyToken");
 
-// Register a new admin (only ICT can do this)
-router.post("/register", verifyToken, adminController.registerAdmin);
+// Register a new admin (no auth required for initial setup)
+router.post("/register", adminController.createAdmin);
+
+// Create staff profile
+router.post("/create-staff", adminController.createStaffProfile);
 
 // Admin login (using staff_id + password)
 router.post("/login", adminController.loginAdmin);
 
-// View all registered admins (protected)
-router.get("/admins", verifyToken, adminController.getAllAdmins);
+// View all registered admins
+router.get("/admins", adminController.getAllAdmins);
 
-// View all registered students (protected)
-router.get("/students", verifyToken, adminController.getAllStudents);
+// View all registered students
+router.get("/students", adminController.getAllStudents);
 
-// View a specific staff record from staff_tab (protected)
-router.get("/staff/:id", verifyToken, adminController.getStaffInfo);
+// View a specific staff record from staff_tab
+router.get("/staff/:id", adminController.getStaffInfo);
 
 module.exports = router;
