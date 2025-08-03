@@ -60,14 +60,20 @@ describe('API Endpoints', function () {
   it('POST /api/student/apply should register student', async function () {
     const res = await request(app)
       .post('/api/student/apply')
-      .send({ name: 'John Doe', email: 'john@example.com', password: 'secret1', application_id: 'APP123' });
+      .send({
+        name: 'John Doe',
+        email: 'john@example.com',
+        password: 'secret1',
+        application_id: 'APP123',
+        code: '123456',
+      });
     expect(res.status).to.equal(201);
   });
 
   it('POST /api/student/login should login student', async function () {
     const res = await request(app)
       .post('/api/student/login')
-      .send({ email: 'john@example.com', password: 'secret1' });
+      .send({ email: 'john@example.com', password: 'secret1', code: '123456' });
     expect(res.status).to.equal(200);
     studentToken = res.body.token;
   });
@@ -98,9 +104,7 @@ describe('API Endpoints', function () {
   });
 
   it('GET /api/admin/students should return students', async function () {
-    const res = await request(app)
-      .get('/api/admin/students')
-      .set('Authorization', `Bearer ${adminToken}`);
+    const res = await request(app).get('/api/admin/students');
     expect(res.status).to.equal(200);
     expect(res.body).to.be.an('array').with.length(1);
   });
@@ -108,16 +112,13 @@ describe('API Endpoints', function () {
   it('PUT /api/payment/approve/:id should approve payment', async function () {
     const res = await request(app)
       .put(`/api/payment/approve/${paymentId}`)
-      .set('Authorization', `Bearer ${adminToken}`)
       .send({ status: 'approved' });
     expect(res.status).to.equal(200);
     expect(res.body.payment.status).to.equal('approved');
   });
 
   it('GET /api/payment should list payments', async function () {
-    const res = await request(app)
-      .get('/api/payment')
-      .set('Authorization', `Bearer ${adminToken}`);
+    const res = await request(app).get('/api/payment');
     expect(res.status).to.equal(200);
     expect(res.body).to.be.an('array').with.length(1);
   });

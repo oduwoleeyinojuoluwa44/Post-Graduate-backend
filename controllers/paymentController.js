@@ -2,7 +2,7 @@ const { Payment } = require("../models");
 
 exports.uploadReceipt = async (req, res) => {
   try {
-    const { payment_type } = req.body;
+    const { payment_type, application_id } = req.body;
     const file = req.file;
 
     if (
@@ -17,7 +17,7 @@ exports.uploadReceipt = async (req, res) => {
     }
 
     const payment = await Payment.create({
-      application_id: req.user.id,
+      application_id: application_id || null,
       payment_type,
       receipt_filename: file.originalname,
       status: "pending",
@@ -47,7 +47,7 @@ exports.approvePayment = async (req, res) => {
     if (!payment) return res.status(404).json({ msg: "Payment not found." });
 
     payment.status = status;
-    payment.reviewed_by = req.user.id;
+    payment.reviewed_by = null;
     payment.reviewed_at = new Date();
     await payment.save();
 
