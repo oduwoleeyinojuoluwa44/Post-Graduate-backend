@@ -36,7 +36,6 @@ describe('API Endpoints', function () {
   });
 
   let studentToken;
-  let adminToken;
   let paymentId;
 
   it('GET / should return API running', async function () {
@@ -65,6 +64,7 @@ describe('API Endpoints', function () {
         email: 'john@example.com',
         password: 'secret1',
         application_id: 'APP123',
+
         code: '123456',
       });
     expect(res.status).to.equal(201);
@@ -73,7 +73,7 @@ describe('API Endpoints', function () {
   it('POST /api/student/login should login student', async function () {
     const res = await request(app)
       .post('/api/student/login')
-      .send({ email: 'john@example.com', password: 'secret1', code: '123456' });
+
     expect(res.status).to.equal(200);
     studentToken = res.body.token;
   });
@@ -100,7 +100,7 @@ describe('API Endpoints', function () {
       .post('/api/admin/login')
       .send({ staff_id: 'A001', password: 'adminpass' });
     expect(res.status).to.equal(200);
-    adminToken = res.body.token;
+    expect(res.body.token).to.be.a('string');
   });
 
   it('GET /api/admin/students should return students', async function () {
