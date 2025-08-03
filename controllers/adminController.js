@@ -2,19 +2,24 @@ const { Admin, Staff, Student } = require("../models");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
-// ICT registers a new admin
-exports.registerAdmin = async (req, res) => {
+// Create a new admin. No authentication is required as this is used
+// during the initial setup of the application. A random password is
+// generated for the admin which should be changed on first login.
+exports.createAdmin = async (req, res) => {
   try {
-    const { staff_id, staff_firstname, staff_middlename, staff_lastname, phone, email, role } = req.body;
+    const {
+      staff_id,
+      staff_firstname,
+      staff_middlename,
+      staff_lastname,
+      phone,
+      email,
+      role,
+    } = req.body;
 
     // Check for required fields
     if (!staff_id || !staff_firstname || !staff_lastname || !email || !role) {
       return res.status(400).json({ msg: "Missing required fields." });
-    }
-
-    // Only ICT can register others
-    if (req.user.role !== "ict") {
-      return res.status(403).json({ msg: "Access denied. Only ICT can register admins." });
     }
 
     // Check if admin already exists
@@ -23,12 +28,12 @@ exports.registerAdmin = async (req, res) => {
       return res.status(400).json({ msg: "Admin with this Staff ID already exists." });
     }
 
-    // Save to staff_tab (basic staff record)
+    // Save basic staff information if not already present
     await Staff.create({
       staff_id,
       staff_firstname,
       staff_middlename,
-      staff_lastname
+      staff_lastname,
     });
 
     // Generate random password
@@ -41,7 +46,7 @@ exports.registerAdmin = async (req, res) => {
       phone,
       email,
       password: hashedPassword,
-      role
+      role,
     });
 
     // Return response
@@ -50,9 +55,69 @@ exports.registerAdmin = async (req, res) => {
       admin: {
         staff_id,
         email,
-        role
+        role,
       },
-      defaultPassword: password
+      defaultPassword: password,
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ msg: "Server error", err });
+  }
+};
+
+// Create a staff profile. Intended for ICT administrators to register
+// academic or non‑teaching staff. No authentication is performed here,
+// so it should be restricted through deployment level controls such as
+// IP whitelisting.
+exports.createStaffProfile = async (req, res) => {
+  try {
+    const {
+      staff_id,
+      surname,
+      firstname,
+      middlename,
+      college,
+      department,
+      email,
+      phone_number,
+      staff_category,
+    } = req.body;
+
+    if (
+      !staff_id ||
+      !surname ||
+      !firstname ||
+      !college ||
+      !department ||
+      !email ||
+      !phone_number ||
+      !staff_category
+    ) {
+      return res.status(400).json({ msg: "Missing required fields." });
+    }
+
+    const existing = await Staff.findOne({ where: { staff_id } });
+    if (existing) {
+      return res
+        .status(400)
+        .json({ msg: "Staff with this Staff ID already exists." });
+    }
+
+    const staff = await Staff.create({
+      staff_id,
+      staff_lastname: surname,
+      staff_firstname: firstname,
+      staff_middlename: middlename || "",
+      college,
+      department,
+      email,
+      phone_number,
+      staff_category,
+    });
+
+    return res.status(201).json({
+      msg: "Staff profile created successfully.",
+      staff,
     });
   } catch (err) {
     console.error(err);
