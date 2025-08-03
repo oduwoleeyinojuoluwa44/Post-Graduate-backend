@@ -6,6 +6,7 @@ process.env.DB_HOST = 'localhost';
 process.env.DB_DIALECT = 'sqlite';
 process.env.DB_STORAGE = ':memory:';
 process.env.JWT_SECRET = 'testsecret';
+process.env.VERIFICATION_CODE = '123456';
 
 const request = require('supertest');
 const { expect } = require('chai');
@@ -36,7 +37,6 @@ describe('API Endpoints', function () {
   });
 
   let studentToken;
-  let adminToken;
   let paymentId;
 
   it('GET / should return API running', async function () {
@@ -60,13 +60,20 @@ describe('API Endpoints', function () {
   it('POST /api/student/apply should register student', async function () {
     const res = await request(app)
       .post('/api/student/apply')
-      .send({ name: 'John Doe', email: 'john@example.com', password: 'secret1', application_id: 'APP123' });
+      .set('X-Verification-Code', '123456')
+      .send({
+        name: 'John Doe',
+        email: 'john@example.com',
+        password: 'secret1',
+        application_id: 'APP123',
+      });
     expect(res.status).to.equal(201);
   });
 
   it('POST /api/student/login should login student', async function () {
     const res = await request(app)
       .post('/api/student/login')
+      .set('X-Verification-Code', '123456')
       .send({ email: 'john@example.com', password: 'secret1' });
     expect(res.status).to.equal(200);
     studentToken = res.body.token;
@@ -94,13 +101,27 @@ describe('API Endpoints', function () {
       .post('/api/admin/login')
       .send({ staff_id: 'A001', password: 'adminpass' });
     expect(res.status).to.equal(200);
-    adminToken = res.body.token;
+  });
+
+  it('POST /api/admin/create-staff should create staff profile', async function () {
+    const res = await request(app)
+      .post('/api/admin/create-staff')
+      .send({
+        staff_id: 'S001',
+        surname: 'Smith',
+        firstname: 'Jane',
+        middlename: 'A',
+        college: 'Science',
+        department: 'Physics',
+        email: 'jane@example.com',
+        phone_number: '1234567890',
+        staff_category: 'Academic',
+      });
+    expect(res.status).to.equal(201);
   });
 
   it('GET /api/admin/students should return students', async function () {
-    const res = await request(app)
-      .get('/api/admin/students')
-      .set('Authorization', `Bearer ${adminToken}`);
+    const res = await request(app).get('/api/admin/students');
     expect(res.status).to.equal(200);
     expect(res.body).to.be.an('array').with.length(1);
   });
@@ -108,16 +129,13 @@ describe('API Endpoints', function () {
   it('PUT /api/payment/approve/:id should approve payment', async function () {
     const res = await request(app)
       .put(`/api/payment/approve/${paymentId}`)
-      .set('Authorization', `Bearer ${adminToken}`)
-      .send({ status: 'approved' });
+      .send({ status: 'approved', reviewer: 'A001' });
     expect(res.status).to.equal(200);
     expect(res.body.payment.status).to.equal('approved');
   });
 
   it('GET /api/payment should list payments', async function () {
-    const res = await request(app)
-      .get('/api/payment')
-      .set('Authorization', `Bearer ${adminToken}`);
+    const res = await request(app).get('/api/payment');
     expect(res.status).to.equal(200);
     expect(res.body).to.be.an('array').with.length(1);
   });

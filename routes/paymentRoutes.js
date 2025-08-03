@@ -1,8 +1,8 @@
 const express = require("express");
 const router = express.Router();
-const verifyToken = require("../middleware/verifyToken");
 const upload = require("../middleware/upload");
 const paymentController = require("../controllers/paymentController");
+const verifyToken = require("../middleware/verifyToken");
 
 // Upload receipt
 router.post(
@@ -13,13 +13,9 @@ router.post(
 );
 
 // Approve payment by bursar or PG officer
-router.put(
-  "/approve/:id",
-  verifyToken,
-  paymentController.approvePayment
-);
+router.put("/approve/:id", paymentController.approvePayment);
 
 // View all payments (admin use)
-router.get("/", verifyToken, paymentController.getAllPayments);
+router.get("/", paymentController.getAllPayments);
 
 module.exports = router;

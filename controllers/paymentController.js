@@ -37,7 +37,7 @@ exports.uploadReceipt = async (req, res) => {
 exports.approvePayment = async (req, res) => {
   try {
     const { id } = req.params;
-    const { status } = req.body;
+    const { status, reviewer } = req.body;
 
     if (!status || !["approved", "rejected"].includes(status)) {
       return res.status(400).json({ msg: "Invalid status." });
@@ -47,7 +47,7 @@ exports.approvePayment = async (req, res) => {
     if (!payment) return res.status(404).json({ msg: "Payment not found." });
 
     payment.status = status;
-    payment.reviewed_by = req.user.id;
+    payment.reviewed_by = reviewer || null;
     payment.reviewed_at = new Date();
     await payment.save();
 

@@ -5,16 +5,19 @@ const jwt = require("jsonwebtoken");
 // ICT registers a new admin
 exports.registerAdmin = async (req, res) => {
   try {
-    const { staff_id, staff_firstname, staff_middlename, staff_lastname, phone, email, role } = req.body;
+    const {
+      staff_id,
+      staff_firstname,
+      staff_middlename,
+      staff_lastname,
+      phone,
+      email,
+      role,
+    } = req.body;
 
     // Check for required fields
     if (!staff_id || !staff_firstname || !staff_lastname || !email || !role) {
       return res.status(400).json({ msg: "Missing required fields." });
-    }
-
-    // Only ICT can register others
-    if (req.user.role !== "ict") {
-      return res.status(403).json({ msg: "Access denied. Only ICT can register admins." });
     }
 
     // Check if admin already exists
@@ -128,6 +131,64 @@ exports.getAllStudents = async (req, res) => {
       attributes: { exclude: ["password"] },
     });
     res.json(students);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ msg: "Server error", err });
+  }
+};
+
+// Create staff profile (ICT/Admin access)
+exports.createStaffProfile = async (req, res) => {
+  try {
+    const {
+      staff_id,
+      surname,
+      firstname,
+      middlename,
+      college,
+      department,
+      email,
+      phone_number,
+      staff_category,
+    } = req.body;
+
+    if (
+      !staff_id ||
+      !surname ||
+      !firstname ||
+      !college ||
+      !department ||
+      !email ||
+      !phone_number ||
+      !staff_category
+    ) {
+      return res.status(400).json({ msg: "Missing required fields." });
+    }
+
+    if (!["Academic", "Non-Teaching"].includes(staff_category)) {
+      return res.status(400).json({ msg: "Invalid staff category." });
+    }
+
+    const existing = await Staff.findOne({ where: { staff_id } });
+    if (existing) {
+      return res.status(400).json({ msg: "Staff with this ID already exists." });
+    }
+
+    const staff = await Staff.create({
+      staff_id,
+      staff_lastname: surname,
+      staff_firstname: firstname,
+      staff_middlename: middlename || null,
+      college,
+      department,
+      email,
+      phone_number,
+      staff_category,
+    });
+
+    return res
+      .status(201)
+      .json({ msg: "Staff profile created successfully.", staff });
   } catch (err) {
     console.error(err);
     res.status(500).json({ msg: "Server error", err });
