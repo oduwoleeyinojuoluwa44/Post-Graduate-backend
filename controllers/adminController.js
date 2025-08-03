@@ -28,15 +28,7 @@ exports.createAdmin = async (req, res) => {
     }
 
     // Save basic staff information if not already present
-    let staffRecord = await Staff.findOne({ where: { staff_id } });
-    if (!staffRecord) {
-      staffRecord = await Staff.create({
-        staff_id,
-        staff_firstname,
-        staff_middlename,
-        staff_lastname,
-      });
-    }
+
 
     // Generate random password
     const password = Math.random().toString(36).slice(-8);
