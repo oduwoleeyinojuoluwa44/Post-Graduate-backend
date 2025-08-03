@@ -64,7 +64,7 @@ describe('API Endpoints', function () {
         email: 'john@example.com',
         password: 'secret1',
         application_id: 'APP123',
-        matric_number: 'MAT123',
+
         code: '123456',
       });
     expect(res.status).to.equal(201);
@@ -73,7 +73,7 @@ describe('API Endpoints', function () {
   it('POST /api/student/login should login student', async function () {
     const res = await request(app)
       .post('/api/student/login')
-      .send({ matric_number: 'MAT123', password: 'secret1', code: '123456' });
+
     expect(res.status).to.equal(200);
     studentToken = res.body.token;
   });
