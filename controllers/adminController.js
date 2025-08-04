@@ -1,6 +1,5 @@
 const { Admin, Staff, Student } = require("../models");
 const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
 
 // Create a new admin. No authentication is required as this is used
 // during the initial setup of the application. A random password is
@@ -29,12 +28,7 @@ exports.createAdmin = async (req, res) => {
     }
 
     // Save basic staff information if not already present
-    await Staff.create({
-      staff_id,
-      staff_firstname,
-      staff_middlename,
-      staff_lastname,
-    });
+
 
     // Generate random password
     const password = Math.random().toString(36).slice(-8);
@@ -140,20 +134,13 @@ exports.loginAdmin = async (req, res) => {
     const isMatch = await bcrypt.compare(password, admin.password);
     if (!isMatch) return res.status(400).json({ msg: "Invalid password." });
 
-    const token = jwt.sign(
-      { id: admin.id, staff_id: admin.staff_id, role: admin.role },
-      process.env.JWT_SECRET,
-      { expiresIn: "7d" }
-    );
-
     res.json({
       msg: "Login successful",
-      token,
       admin: {
         staff_id: admin.staff_id,
         email: admin.email,
-        role: admin.role
-      }
+        role: admin.role,
+      },
     });
   } catch (err) {
     console.error(err);
