@@ -9,7 +9,7 @@ const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 // REGISTER STUDENT
 exports.registerStudent = async (req, res) => {
   try {
-    const { name, email, password, application_id } = req.body;
+    const { name, email, password, application_id, matric_number } = req.body;
 
     if (!name || !email || !password || !application_id)
       return res.status(400).json({ msg: "All fields are required." });
@@ -28,6 +28,12 @@ exports.registerStudent = async (req, res) => {
     if (existingAppID)
       return res.status(400).json({ msg: "Application ID already exists." });
 
+    if (matric_number) {
+      const existingMatric = await Student.findOne({ where: { matric_number } });
+      if (existingMatric)
+        return res.status(400).json({ msg: "Matric number already exists." });
+    }
+
     // Hash password before saving
     const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -36,6 +42,7 @@ exports.registerStudent = async (req, res) => {
       email,
       password: hashedPassword,
       application_id,
+      matric_number,
     });
 
     await sendEmail({
@@ -65,21 +72,30 @@ exports.loginStudent = async (req, res) => {
   try {
     const { email, password, matric_number, application_id } = req.body;
 
-    if (!email || !password)
-      return res.status(400).json({ msg: "Email and password are required." });
+    if (!password || (!email && !matric_number && !application_id))
+      return res
+        .status(400)
+        .json({ msg: "Email, matric number or application ID and password are required." });
 
-    if (!isValidEmail(email))
+    if (email && !isValidEmail(email))
       return res.status(400).json({ msg: "Invalid email format." });
 
-    const student = await Student.findOne({ where: { email } });
+    let student;
+    if (email) student = await Student.findOne({ where: { email } });
+    else if (matric_number) student = await Student.findOne({ where: { matric_number } });
+    else student = await Student.findOne({ where: { application_id } });
+
     if (!student)
-      return res.status(400).json({ msg: "No account found for this email." });
+      return res.status(400).json({ msg: "No account found." });
 
     const isMatch = await bcrypt.compare(password, student.password);
     if (!isMatch)
       return res.status(400).json({ msg: "Invalid password." });
 
-    // Optional checks
+    // Optional checks for additional identifiers
+    if (email && student.email !== email)
+      return res.status(400).json({ msg: "Email mismatch." });
+
     if (matric_number && student.matric_number !== matric_number)
       return res.status(400).json({ msg: "Matric number mismatch." });
 
@@ -88,7 +104,7 @@ exports.loginStudent = async (req, res) => {
 
     const token = jwt.sign(
       { id: student.id, role: "student" },
-      process.env.JWT_SECRET,
+      process.env.JWT_SECRET || "secret",
       { expiresIn: "7d" }
     );
 
